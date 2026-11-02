@@ -13,8 +13,8 @@ updated_at: "2026-11-02"
 Transform the Python health screening script from Aplikasi_Skrining_Kesehatan_Pasien.pdf (SMK Kesehatan) into a production-grade Python web application with real-time vital sign triage, patient registration, searchable record grid, and aggregate statistics.
 
 ## Acceptance Criteria
-- []x Core medical screening functions (cek_suhu, cek_nadi, cek_pernapasan, hasil_skrining) with 100% boundary test coverage
-- [ ] In-memory and SQLite repository for patient records and statistics
+- [x] Core medical screening functions (cek_suhu, cek_nadi, cek_pernapasan, hasil_skrining) with 100% boundary test coverage
+- [x] In-memory and SQLite repository for patient records and statistics
 - [ ] FastAPI web backend with endpoints matching the original CLI menus
 - [ ] Responsive web UI with real-time triage calculator, patient form, searchable table, and statistics cards
 - [ ] Single-enter shell bundle (test.sh, deploy.sh) and automated verification tests passing
