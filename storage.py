@@ -16,14 +16,12 @@ class PatientRepository:
             self._shared_conn = sqlite3.connect(":memory:", check_same_thread=False)
             self._shared_conn.row_factory = sqlite3.Row
         self._init_db()
-        
-            def _get_connection(self) -> sqlite3.Connection:
-                    if self._shared_conn is not None:
-                                return self._shared_conn
-                                        conn = sqlite3.connect(self.db_path, check_same_thread=False)
-                                        
-                                        
-                conn.row_factory = sqlite3.Row
+
+    def _get_connection(self) -> sqlite3.Connection:
+        if self._shared_conn is not None:
+            return self._shared_conn
+        conn = sqlite3.connect(self.db_path, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
         return conn
 
     def _init_db(self) -> None:

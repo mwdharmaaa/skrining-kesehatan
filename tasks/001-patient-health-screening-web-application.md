@@ -15,7 +15,7 @@ Transform the Python health screening script from Aplikasi_Skrining_Kesehatan_Pa
 ## Acceptance Criteria
 - [x] Core medical screening functions (cek_suhu, cek_nadi, cek_pernapasan, hasil_skrining) with 100% boundary test coverage
 - [x] In-memory and SQLite repository for patient records and statistics
-- [ ] FastAPI web backend with endpoints matching the original CLI menus
+- []x FastAPI web backend with endpoints matching the original CLI menus
 - [ ] Responsive web UI with real-time triage calculator, patient form, searchable table, and statistics cards
 - [ ] Single-enter shell bundle (test.sh, deploy.sh) and automated verification tests passing
 
