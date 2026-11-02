@@ -9,7 +9,7 @@
 <body>
   <div class="app-layout">
     <header class="app-header">
-<div class="header-container">
+      <div class="header-container">
         <div class="header-brand">
           <div class="brand-badge">SMK Kesehatan - Kelas XI Fase F Awal</div>
           <h1 class="brand-title">Sistem Skrining Kesehatan Pasien</h1>
@@ -19,10 +19,10 @@
           <button id="btn-scroll-form" class="btn btn-primary">Tambah Data Pasien</button>
         </div>
       </div>
-          </header>
+    </header>
 
-<main class="app-main">
-<div class="container">
+    <main class="app-main">
+      <div class="container">
         <!-- STATISTIK PASIEN (MENU 4) -->
         <section class="stats-section">
           <div class="section-heading">
@@ -52,7 +52,7 @@
             </div>
           </div>
         </section>
-        
+
         <div class="dashboard-split">
           <!-- FORM INPUT DATA PASIEN (MENU 1) -->
           <section class="form-section" id="form-container">
@@ -61,17 +61,17 @@
                 <h2 class="panel-title">Input Data Pasien</h2>
                 <p class="panel-desc">Masukkan identitas dan tiga parameter tanda vital pasien.</p>
               </div>
-              
+
               <form id="patient-form" class="patient-form" novalidate>
                 <div class="form-group">
                   <label for="input-nama" class="form-label">Nama Pasien</label>
-                  <input type="text" id="input-nama" class="form-control" placeholder="Contoh: Ahmad Fauzi" required></input>
+                  <input type="text" id="input-nama" class="form-control" placeholder="Contoh: Ahmad Fauzi" required>
                 </div>
-                
+
                 <div class="form-row">
                   <div class="form-group col-half">
                     <label for="input-umur" class="form-label">Umur (tahun)</label>
-                    <input type="number" id="input-umur" class="form-control" placeholder="Contoh: 17" min="1" max="120" required></input>
+                    <input type="number" id="input-umur" class="form-control" placeholder="Contoh: 17" min="1" max="120" required>
                   </div>
                   <div class="form-group col-half">
                     <label for="input-gender" class="form-label">Jenis Kelamin</label>
@@ -81,39 +81,36 @@
                     </select>
                   </div>
                 </div>
-                
+
                 <div class="vital-section-title">Pemeriksaan Tanda Vital</div>
-                
+
                 <div class="form-group">
                   <div class="vital-header">
                     <label for="input-suhu" class="form-label">Suhu Tubuh (&deg;C)</label>
                     <span id="badge-suhu" class="status-pill">Normal</span>
                   </div>
                   <input type="number" id="input-suhu" class="form-control" step="0.1" placeholder="36.5" min="30" max="45" value="36.5" required>
-                                      <span class="field-hint">Normal: &lt; 37.5&deg;C | Pantau: 37.5-37.9&deg;C | Demam: &ge; 38.0&deg;C</span>
-                  </input>
+                  <span class="field-hint">Normal: &lt; 37.5&deg;C | Pantau: 37.5-37.9&deg;C | Demam: &ge; 38.0&deg;C</span>
                 </div>
-                
+
                 <div class="form-group">
                   <div class="vital-header">
                     <label for="input-nadi" class="form-label">Denyut Nadi (kali/menit)</label>
                     <span id="badge-nadi" class="status-pill">Nadi Normal</span>
                   </div>
                   <input type="number" id="input-nadi" class="form-control" placeholder="75" min="30" max="220" value="75" required>
-                                      <span class="field-hint">Rendah: &lt; 60 bpm | Normal: 60-100 bpm | Tinggi: &gt; 100 bpm</span>
-                  </input>
+                  <span class="field-hint">Rendah: &lt; 60 bpm | Normal: 60-100 bpm | Tinggi: &gt; 100 bpm</span>
                 </div>
-                
+
                 <div class="form-group">
                   <div class="vital-header">
                     <label for="input-napas" class="form-label">Frekuensi Pernapasan (kali/menit)</label>
                     <span id="badge-napas" class="status-pill">Pernapasan Normal</span>
                   </div>
                   <input type="number" id="input-napas" class="form-control" placeholder="16" min="5" max="60" value="16" required>
-                                      <span class="field-hint">Lambat: &lt; 12 | Normal: 12-20 | Cepat: &gt; 20 kali/menit</span>
-                  </input>
+                  <span class="field-hint">Lambat: &lt; 12 | Normal: 12-20 | Cepat: &gt; 20 kali/menit</span>
                 </div>
-                
+
                 <!-- LIVE TRIAGE OUTCOME PREVIEW -->
                 <div class="triage-preview-box">
                   <div class="triage-preview-label">Estimasi Hasil Skrining:</div>
@@ -121,7 +118,7 @@
                     Kondisi dalam batas pemantauan normal
                   </div>
                 </div>
-                
+
                 <div class="form-actions">
                   <button type="submit" id="btn-submit" class="btn btn-primary btn-block">
                     Simpan Data Pasien
@@ -133,7 +130,7 @@
               </form>
             </div>
           </section>
-          
+
           <!-- DAFTAR DATA PASIEN (MENU 2 & 3) -->
           <section class="table-section">
             <div class="panel">
@@ -146,11 +143,11 @@
                   <button id="btn-export-csv" class="btn btn-secondary btn-sm">Ekspor CSV</button>
                 </div>
               </div>
-              
+
               <!-- CARI PASIEN & FILTER -->
               <div class="filter-bar">
                 <div class="search-box">
-                  <input type="text" id="search-input" class="form-control" placeholder="Cari nama pasien (Fungsi 7)..."></input>
+                  <input type="text" id="search-input" class="form-control" placeholder="Cari nama pasien (Fungsi 7)...">
                 </div>
                 <div class="filter-box">
                   <select id="filter-status" class="form-control">
@@ -161,7 +158,7 @@
                   </select>
                 </div>
               </div>
-              
+
               <!-- TABLE -->
               <div class="table-responsive">
                 <table class="data-table">
@@ -183,7 +180,7 @@
                   </tbody>
                 </table>
               </div>
-              
+
               <div id="empty-state" class="empty-state" style="display: none;">
                 <p class="empty-title">Belum ada data pasien.</p>
                 <p class="empty-desc">Silakan masukkan data pasien baru pada formulir di sebelah kiri.</p>
@@ -191,8 +188,8 @@
             </div>
           </section>
         </div>
-      </div>      
-      
+      </div>
+
       <!-- MODAL DETAIL / REFERRAL SLIP -->
       <div id="detail-modal" class="modal-overlay" style="display: none;">
         <div class="modal-card">
@@ -209,22 +206,19 @@
           </div>
         </div>
       </div>
-      
+
       <!-- TOAST NOTIFICATION -->
       <div id="toast" class="toast" style="display: none;"></div>
-      
-      
     </main>
-    
+
     <footer class="app-footer">
-<div class="container footer-content">
+      <div class="container footer-content">
         <p>Aplikasi Skrining Kesehatan Pasien Sederhana</p>
         <p class="footer-meta">Konteks Kurikulum: Koding dan Kecerdasan Artifisial, Kelas XI Fase F Awal (SMK Kesehatan) - Berbasis Python &amp; Web Standards</p>
-      </div>      
-      
-      
+      </div>
     </footer>
   </div>
   <script src="./static/js/app.js"></script>
 </body>
 </html>
+
