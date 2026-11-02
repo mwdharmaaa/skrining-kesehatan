@@ -49,6 +49,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (suhu >= 38.0) return { label: "Demam", cls: "status-danger" };
     if (suhu >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
     return { label: "Normal", cls: "status-normal" };
+    
+;
+    if (suhu >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
+    return { label: "Normal", cls: "status-normal" };
   }
 
   function cekNadi(nadi) {
