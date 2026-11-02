@@ -143,7 +143,15 @@ if (typeof document !== "undefined") {
     const btnCloseModal = document.getElementById("btn-close-modal");
     const btnDismissModal = document.getElementById("btn-dismiss-modal");
     const btnPrintModal = document.getElementById("btn-print-modal");
+
+    const confirmModal = document.getElementById("confirm-modal");
+    const confirmModalText = document.getElementById("confirm-modal-text");
+    const btnCloseConfirm = document.getElementById("btn-close-confirm");
+    const btnCancelDelete = document.getElementById("btn-cancel-delete");
+    const btnConfirmDelete = document.getElementById("btn-confirm-delete");
     const toast = document.getElementById("toast");
+
+    let pendingDeleteId = null;
 
     // Reactive Live Triage Calculation
     function updateLiveTriage() {
@@ -310,7 +318,8 @@ if (typeof document !== "undefined") {
       tableBody.querySelectorAll(".btn-delete").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = parseInt(btn.getAttribute("data-id"), 10);
-          deletePatient(id);
+          const patient = allPatients.find((pt) => pt.id === id);
+          openConfirmModal(id, patient ? patient.nama : "");
         });
       });
     }
@@ -479,12 +488,41 @@ if (typeof document !== "undefined") {
       });
     }
 
-    // Delete Patient
-    async function deletePatient(id) {
-      if (!confirm(`Konfirmasi: Hapus data pasien #${id}?`)) {
-        return;
+    // Custom In-App Confirmation Modal for Deletion
+    function openConfirmModal(id, nama) {
+      pendingDeleteId = id;
+      if (confirmModalText) {
+        confirmModalText.innerHTML = `Apakah kamu yakin ingin menghapus data pasien <strong>${escapeHtml(nama || `#${id}`)}</strong>?`;
       }
+      if (confirmModal) confirmModal.style.display = "flex";
+    }
 
+    function closeConfirmModal() {
+      pendingDeleteId = null;
+      if (confirmModal) confirmModal.style.display = "none";
+    }
+
+    if (btnCloseConfirm) btnCloseConfirm.addEventListener("click", closeConfirmModal);
+    if (btnCancelDelete) btnCancelDelete.addEventListener("click", closeConfirmModal);
+
+    if (confirmModal) {
+      confirmModal.addEventListener("click", (e) => {
+        if (e.target === confirmModal) closeConfirmModal();
+      });
+    }
+
+    if (btnConfirmDelete) {
+      btnConfirmDelete.addEventListener("click", async () => {
+        if (pendingDeleteId !== null) {
+          const idToDelete = pendingDeleteId;
+          closeConfirmModal();
+          await executeDeletePatient(idToDelete);
+        }
+      });
+    }
+
+    // Execute Delete Patient
+    async function executeDeletePatient(id) {
       if (isOfflineMode) {
         let localPatients = getLocalPatients();
         localPatients = localPatients.filter((p) => p.id !== id);
@@ -658,14 +696,27 @@ if (typeof document !== "undefined") {
     }
 
     // Toast Notification
+    let toastTimeout = null;
     function showToast(message) {
       if (!toast) return;
+      if (toastTimeout) clearTimeout(toastTimeout);
       toast.textContent = message;
       toast.style.display = "block";
-      setTimeout(() => {
+      toastTimeout = setTimeout(() => {
         toast.style.display = "none";
-      }, 3200);
+      }, 3000);
     }
+
+    // Global Key Listener for Modals
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        if (confirmModal && confirmModal.style.display === "flex") {
+          closeConfirmModal();
+        } else if (detailModal && detailModal.style.display === "flex") {
+          closeModal();
+        }
+      }
+    });
 
     // Initial Boot Sequence
     updateLiveTriage();

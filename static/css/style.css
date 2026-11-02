@@ -363,6 +363,16 @@ body {
   background-color: #e5e7eb;
 }
 
+.btn-danger {
+  background-color: #e11d48;
+  color: #ffffff;
+  border-color: #be123c;
+}
+
+.btn-danger:hover {
+  background-color: #be123c;
+}
+
 .btn-sm {
   padding: 4px 10px;
   font-size: 12px;
@@ -506,6 +516,16 @@ body {
   max-width: 520px;
   width: 100%;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-card-sm {
+  max-width: 400px;
+}
+
+.modal-subtext {
+  font-size: 11px;
+  color: var(--text-caption);
+  margin-top: 6px;
 }
 
 .modal-header {
