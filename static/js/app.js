@@ -49,16 +49,39 @@ document.addEventListener("DOMContentLoaded", () => {
     if (suhu >= 38.0) return { label: "Demam", cls: "status-danger" };
     if (suhu >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
     return { label: "Normal", cls: "status-normal" };
+      }
+;
+    if (suhu >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
+    return { label: "Normal", cls: "status-normal" };
+      }
+;
+    if (suhu >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
+    return { label: "Normal", cls: "status-normal" };
   }
 
   function cekNadi(nadi) {
     if (nadi < 60) return { label: "Nadi Rendah", cls: "status-warning" };
     if (nadi <= 100) return { label: "Nadi Normal", cls: "status-normal" };
     return { label: "Nadi Tinggi", cls: "status-danger" };
+      }
+;
+    if (nadi <= 100) return { label: "Nadi Normal", cls: "status-normal" };
+    return { label: "Nadi Tinggi", cls: "status-danger" };
+      }
+;
+    if (nadi <= 100) return { label: "Nadi Normal", cls: "status-normal" };
+    return { label: "Nadi Tinggi", cls: "status-danger" };
   }
 
   function cekPernapasan(napas) {
     if (napas < 12) return { label: "Pernapasan Lambat", cls: "status-warning" };
+    if (napas <= 20) return { label: "Pernapasan Normal", cls: "status-normal" };
+    return {}
+;
+    if (napas <= 20) return { label: "Pernapasan Normal", cls: "status-normal" };
+    return { label: "Pernapasan Cepat", cls: "status-danger" };
+      }
+;
     if (napas <= 20) return { label: "Pernapasan Normal", cls: "status-normal" };
     return { label: "Pernapasan Cepat", cls: "status-danger" };
   }
@@ -128,16 +151,28 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadStats() {
     try {
       const res = await fetch("/api/stats");
-      if (!res.ok) return;
-      const stats = await res.json();
-      statsTotal.textContent = stats.total;
-      statsNormal.textContent = stats.normal;
-      statsPemantauan.textContent = stats.pemantauan;
-      statsPemeriksaan.textContent = stats.pemeriksaan;
-    } catch (err) {
-      console.error("Failed to load stats:", err);
+      if (res.ok) {
+        const stats = await res.json();
+        statsTotal.textContent = stats.total;
+        statsNormal.textContent = stats.normal;
+        statsPemantauan.textContent = stats.pemantauan;
+        statsPemeriksaan.textContent = stats.pemeriksaan;
+        return;
+      }
+          } catch (err) {}
+                // Offline fallback: calculate stats from local patient list
+                    }
+                        const total = allPatients.length;
+                            const normal = allPatients.filter((p) => p.hasil === "Kondisi dalam batas pemantauan normal").length;
+                                const pemantauan = allPatients.filter((p) => p.hasil === "Perlu pemantauan lebih lanjut").length;
+                                    const pemeriksaan = allPatients.filter((p) => p.hasil === "Disarankan pemeriksaan oleh tenaga kesehatan").length;
+                                        statsTotal.textContent = total;
+                                            statsNormal.textContent = normal;
+                                                statsPemantauan.textContent = pemantauan;
+                                                    statsPemeriksaan.textContent = pemeriksaan;
+                                                    
+                                                    
     }
-  }
 
   // Render Table
   function renderTable(patients) {
