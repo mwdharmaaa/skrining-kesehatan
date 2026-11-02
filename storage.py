@@ -20,7 +20,9 @@ class PatientRepository:
             def _get_connection(self) -> sqlite3.Connection:
                     if self._shared_conn is not None:
                                 return self._shared_conn
-                                
+                                        conn = sqlite3.connect(self.db_path, check_same_thread=False)
+                                        
+                                        
                 conn.row_factory = sqlite3.Row
         return conn
 
