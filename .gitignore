@@ -9,3 +9,5 @@ htmlcov/
 dist/
 build/
 .env
+setup-gh-auth.sh
+setup-gh-auth.sh
