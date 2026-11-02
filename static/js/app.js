@@ -183,6 +183,15 @@ if (typeof document !== "undefined") {
       }
     });
 
+    const LEGACY_DUMMY_NAMES = new Set([
+      "Ahmad Fauzi",
+      "Siti Nurhaliza",
+      "Budi Santoso",
+      "Dewi Lestari",
+      "Budi Wicaksono",
+      "Rian Pratama"
+    ]);
+
     // LocalStorage Helpers for Standalone / GitHub Pages Mode
     function getLocalPatients() {
       try {
@@ -191,7 +200,16 @@ if (typeof document !== "undefined") {
           localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
           return [];
         }
-        return JSON.parse(raw) || [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        // Purge lingering legacy ghost records from browser localStorage
+        const cleaned = parsed.filter(
+          (p) => p && !LEGACY_DUMMY_NAMES.has(String(p.nama || "").trim())
+        );
+        if (cleaned.length !== parsed.length) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
+        }
+        return cleaned;
       } catch (e) {
         return [];
       }
