@@ -110,66 +110,6 @@ if (typeof document !== "undefined") {
 
     const STORAGE_KEY = "skrining_kesehatan_patients_v1";
 
-    // Initial Seed Data for Static / GitHub Pages Hosting
-    const SEED_PATIENTS = [
-      {
-        id: 1,
-        nama: "Ahmad Fauzi",
-        umur: 17,
-        jenis_kelamin: "Laki-laki (L)",
-        suhu: 36.5,
-        status_suhu: "Normal",
-        nadi: 75,
-        status_nadi: "Nadi Normal",
-        napas: 16,
-        status_napas: "Pernapasan Normal",
-        hasil: "Kondisi dalam batas pemantauan normal",
-        created_at: "2026-11-02 08:30:00"
-      },
-      {
-        id: 2,
-        nama: "Siti Nurhaliza",
-        umur: 16,
-        jenis_kelamin: "Perempuan (P)",
-        suhu: 38.2,
-        status_suhu: "Demam",
-        nadi: 88,
-        status_nadi: "Nadi Normal",
-        napas: 18,
-        status_napas: "Pernapasan Normal",
-        hasil: "Perlu pemantauan lebih lanjut",
-        created_at: "2026-11-02 09:15:00"
-      },
-      {
-        id: 3,
-        nama: "Budi Santoso",
-        umur: 18,
-        jenis_kelamin: "Laki-laki (L)",
-        suhu: 39.0,
-        status_suhu: "Demam",
-        nadi: 105,
-        status_nadi: "Nadi Tinggi",
-        napas: 22,
-        status_napas: "Pernapasan Cepat",
-        hasil: "Disarankan pemeriksaan oleh tenaga kesehatan",
-        created_at: "2026-11-02 10:00:00"
-      },
-      {
-        id: 4,
-        nama: "Dewi Lestari",
-        umur: 17,
-        jenis_kelamin: "Perempuan (P)",
-        suhu: 37.6,
-        status_suhu: "Perlu Pemantauan",
-        nadi: 72,
-        status_nadi: "Nadi Normal",
-        napas: 17,
-        status_napas: "Pernapasan Normal",
-        hasil: "Kondisi dalam batas pemantauan normal",
-        created_at: "2026-11-02 10:45:00"
-      }
-    ];
-
     // DOM Elements
     const statsTotal = document.getElementById("stats-total");
     const statsNormal = document.getElementById("stats-normal");
@@ -248,12 +188,12 @@ if (typeof document !== "undefined") {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_PATIENTS));
-          return [...SEED_PATIENTS];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
+          return [];
         }
         return JSON.parse(raw) || [];
       } catch (e) {
-        return [...SEED_PATIENTS];
+        return [];
       }
     }
 

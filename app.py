@@ -174,25 +174,9 @@ class ScreeningRequestHandler(SimpleHTTPRequestHandler):
         self._send_error_json(404, "Endpoint not found")
 
 
-def seed_defaults(repo: PatientRepository) -> None:
-    """Seed initial sample records if repository is empty for instant demonstration."""
-    if repo.get_statistics()["total"] == 0:
-        samples = [
-            ("Ahmad Fauzi", 17, "L", 38.6, 108, 22),
-            ("Siti Nurhaliza", 16, "P", 37.0, 78, 16),
-            ("Budi Wicaksono", 18, "L", 37.7, 85, 18),
-            ("Dewi Sartika", 17, "P", 39.1, 115, 24),
-            ("Rian Pratama", 16, "L", 36.8, 72, 15)
-        ]
-        for nama, umur, jk, suhu, nadi, napas in samples:
-            evaluated = evaluasi_pasien(nama, umur, jk, suhu, nadi, napas)
-            repo.add_patient(evaluated)
-
-
 def create_server(host: str = "0.0.0.0", port: int = 8000, db_path: str = "patients.db") -> ThreadingHTTPServer:
     """Create and configure server instance."""
     repo = PatientRepository(db_path=db_path)
-    seed_defaults(repo)
 
     class ConfiguredHandler(ScreeningRequestHandler):
         pass
