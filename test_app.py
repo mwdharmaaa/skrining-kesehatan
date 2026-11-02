@@ -111,6 +111,30 @@ class TestAppServer(unittest.TestCase):
         with urllib.request.urlopen(req) as resp:
             self.assertEqual(resp.status, 200)
 
+    def test_serve_html_and_static_files(self):
+        # Test root HTML serving
+        req = urllib.request.Request(f"{self.base_url}/")
+        with urllib.request.urlopen(req) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("text/html", resp.headers.get("Content-Type", ""))
+            html_content = resp.read().decode("utf-8")
+            self.assertIn("Sistem Skrining Kesehatan Pasien", html_content)
+
+        # Test CSS serving
+        req_css = urllib.request.Request(f"{self.base_url}/static/css/style.css")
+        with urllib.request.urlopen(req_css) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertIn("text/css", resp.headers.get("Content-Type", ""))
+
+        # Test JS serving
+        req_js = urllib.request.Request(f"{self.base_url}/static/js/app.js")
+        with urllib.request.urlopen(req_js) as resp:
+            self.assertEqual(resp.status, 200)
+            self.assertTrue(
+                "javascript" in resp.headers.get("Content-Type", "")
+                or "application" in resp.headers.get("Content-Type", "")
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
