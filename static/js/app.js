@@ -1,6 +1,6 @@
 /**
- * Patient Health Screening Application (Frontend)
- * Implements real-time vital sign triage, patient registration,
+ * Patient Blood Pressure Screening Application (Frontend)
+ * Implements real-time blood pressure triage, patient registration,
  * searchable datagrid, live statistics, and dual-mode persistence (API + LocalStorage).
  */
 
@@ -8,12 +8,25 @@
 // CLINICAL TRIAGE RULES ENGINE (Exact parity with Python screening.py)
 // ==============================================================================
 
-function cekSuhu(suhu) {
-  const val = parseFloat(suhu);
-  if (isNaN(val)) return { label: "Normal", cls: "status-normal" };
-  if (val >= 38.0) return { label: "Demam", cls: "status-danger" };
-  if (val >= 37.5) return { label: "Perlu Pemantauan", cls: "status-warning" };
-  return { label: "Normal", cls: "status-normal" };
+function cekSistolik(sistolik) {
+  const val = parseInt(sistolik, 10);
+  if (isNaN(val)) return { label: "Sistolik Normal", cls: "status-normal" };
+  if (val >= 180) return { label: "Sistolik Krisis (Sangat Tinggi)", cls: "status-critical" };
+  if (val >= 140) return { label: "Sistolik Tinggi (Hipertensi Derajat 2)", cls: "status-severe" };
+  if (val >= 130) return { label: "Sistolik Tinggi (Hipertensi Derajat 1)", cls: "status-alert" };
+  if (val >= 120) return { label: "Sistolik Meningkat (Prahipertensi)", cls: "status-caution" };
+  if (val >= 90) return { label: "Sistolik Normal", cls: "status-normal" };
+  return { label: "Sistolik Rendah (Hipotensi)", cls: "status-info" };
+}
+
+function cekDiastolik(diastolik) {
+  const val = parseInt(diastolik, 10);
+  if (isNaN(val)) return { label: "Diastolik Normal", cls: "status-normal" };
+  if (val >= 120) return { label: "Diastolik Krisis (Sangat Tinggi)", cls: "status-critical" };
+  if (val >= 90) return { label: "Diastolik Tinggi (Hipertensi Derajat 2)", cls: "status-severe" };
+  if (val >= 80) return { label: "Diastolik Tinggi (Hipertensi Derajat 1)", cls: "status-alert" };
+  if (val >= 60) return { label: "Diastolik Normal", cls: "status-normal" };
+  return { label: "Diastolik Rendah (Hipotensi)", cls: "status-info" };
 }
 
 function cekNadi(nadi) {
@@ -24,55 +37,78 @@ function cekNadi(nadi) {
   return { label: "Nadi Tinggi", cls: "status-danger" };
 }
 
-function cekPernapasan(napas) {
-  const val = parseInt(napas, 10);
-  if (isNaN(val)) return { label: "Pernapasan Normal", cls: "status-normal" };
-  if (val < 12) return { label: "Pernapasan Lambat", cls: "status-warning" };
-  if (val <= 20) return { label: "Pernapasan Normal", cls: "status-normal" };
-  return { label: "Pernapasan Cepat", cls: "status-danger" };
-}
+function hasilSkrining(sistolik, diastolik) {
+  const s = parseInt(sistolik, 10);
+  const d = parseInt(diastolik, 10);
 
-function hasilSkrining(suhu, nadi, napas) {
-  const s = parseFloat(suhu);
-  const nd = parseInt(nadi, 10);
-  const np = parseInt(napas, 10);
-
-  let warning = 0;
-  if (!isNaN(s) && s >= 38.0) warning++;
-  if (!isNaN(nd) && (nd < 60 || nd > 100)) warning++;
-  if (!isNaN(np) && (np < 12 || np > 20)) warning++;
-
-  if (warning === 0) {
-    return {
-      label: "Kondisi dalam batas pemantauan normal",
-      cls: "status-normal"
-    };
+  if (!isNaN(s) && !isNaN(d)) {
+    if (s >= 180 || d >= 120) {
+      return {
+        label: "Krisis Hipertensi (Bahaya - Perlu Tindakan Darurat)",
+        cls: "status-critical"
+      };
+    }
+    if (s >= 140 || d >= 90) {
+      return {
+        label: "Hipertensi Derajat 2",
+        cls: "status-severe"
+      };
+    }
+    if (s >= 130 || d >= 80) {
+      return {
+        label: "Hipertensi Derajat 1",
+        cls: "status-alert"
+      };
+    }
+    if (s >= 120 && d < 80) {
+      return {
+        label: "Prahipertensi (Meningkat)",
+        cls: "status-caution"
+      };
+    }
+    if (s < 90 || d < 60) {
+      return {
+        label: "Hipotensi (Tekanan Darah Rendah)",
+        cls: "status-info"
+      };
+    }
   }
-  if (warning === 1) {
-    return {
-      label: "Perlu pemantauan lebih lanjut",
-      cls: "status-warning"
-    };
-  }
+
   return {
-    label: "Disarankan pemeriksaan oleh tenaga kesehatan",
-    cls: "status-danger"
+    label: "Tekanan Darah Normal",
+    cls: "status-normal"
   };
 }
 
 function computeLocalStats(patients) {
-  let total = (patients || []).length;
+  const list = patients || [];
+  let total = list.length;
   let normal = 0;
-  let pemantauan = 0;
-  let pemeriksaan = 0;
+  let hipotensi = 0;
+  let prahipertensi = 0;
+  let hipertensi_1 = 0;
+  let hipertensi_2 = 0;
+  let krisis = 0;
 
-  (patients || []).forEach((p) => {
-    if (p.hasil === "Kondisi dalam batas pemantauan normal") normal++;
-    else if (p.hasil === "Perlu pemantauan lebih lanjut") pemantauan++;
-    else if (p.hasil === "Disarankan pemeriksaan oleh tenaga kesehatan") pemeriksaan++;
+  list.forEach((p) => {
+    const h = p.hasil || "";
+    if (h === "Tekanan Darah Normal") normal++;
+    else if (h === "Hipotensi (Tekanan Darah Rendah)") hipotensi++;
+    else if (h === "Prahipertensi (Meningkat)") prahipertensi++;
+    else if (h === "Hipertensi Derajat 1") hipertensi_1++;
+    else if (h === "Hipertensi Derajat 2") hipertensi_2++;
+    else if (h.includes("Krisis")) krisis++;
   });
 
-  return { total, normal, pemantauan, pemeriksaan };
+  return {
+    total,
+    normal,
+    hipotensi,
+    prahipertensi,
+    hipertensi_1,
+    hipertensi_2,
+    krisis
+  };
 }
 
 function escapeHtml(str) {
@@ -85,12 +121,11 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-// Module export for testing environments
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    cekSuhu,
+    cekSistolik,
+    cekDiastolik,
     cekNadi,
-    cekPernapasan,
     hasilSkrining,
     computeLocalStats,
     escapeHtml
@@ -103,32 +138,37 @@ if (typeof module !== "undefined" && module.exports) {
 
 if (typeof document !== "undefined") {
   document.addEventListener("DOMContentLoaded", () => {
-    // Application State
     let allPatients = [];
     let isOfflineMode = false;
     let debounceTimer = null;
 
-    const STORAGE_KEY = "skrining_kesehatan_patients_v1";
+    const STORAGE_KEY = "skrining_tekanan_darah_v1";
 
-    // DOM Elements
+    // DOM Elements - Stats
     const statsTotal = document.getElementById("stats-total");
     const statsNormal = document.getElementById("stats-normal");
-    const statsPemantauan = document.getElementById("stats-pemantauan");
-    const statsPemeriksaan = document.getElementById("stats-pemeriksaan");
+    const statsHipotensi = document.getElementById("stats-hipotensi");
+    const statsPrahipertensi = document.getElementById("stats-prahipertensi");
+    const statsHipertensi1 = document.getElementById("stats-hipertensi-1");
+    const statsHipertensi2 = document.getElementById("stats-hipertensi-2");
+    const statsKrisis = document.getElementById("stats-krisis");
 
+    // DOM Elements - Form
     const patientForm = document.getElementById("patient-form");
     const inputNama = document.getElementById("input-nama");
     const inputUmur = document.getElementById("input-umur");
     const inputGender = document.getElementById("input-gender");
-    const inputSuhu = document.getElementById("input-suhu");
+    const inputSistolik = document.getElementById("input-sistolik");
+    const inputDiastolik = document.getElementById("input-diastolik");
     const inputNadi = document.getElementById("input-nadi");
-    const inputNapas = document.getElementById("input-napas");
 
-    const badgeSuhu = document.getElementById("badge-suhu");
+    // DOM Elements - Badges
+    const badgeSistolik = document.getElementById("badge-sistolik");
+    const badgeDiastolik = document.getElementById("badge-diastolik");
     const badgeNadi = document.getElementById("badge-nadi");
-    const badgeNapas = document.getElementById("badge-napas");
     const badgeSummary = document.getElementById("badge-skrining-summary");
 
+    // DOM Elements - Controls & Table
     const searchInput = document.getElementById("search-input");
     const filterStatus = document.getElementById("filter-status");
     const tableBody = document.getElementById("table-body");
@@ -138,6 +178,7 @@ if (typeof document !== "undefined") {
     const btnExportCsv = document.getElementById("btn-export-csv");
     const btnScrollForm = document.getElementById("btn-scroll-form");
 
+    // DOM Elements - Modals
     const detailModal = document.getElementById("detail-modal");
     const modalContent = document.getElementById("modal-content");
     const btnCloseModal = document.getElementById("btn-close-modal");
@@ -155,26 +196,26 @@ if (typeof document !== "undefined") {
 
     // Reactive Live Triage Calculation
     function updateLiveTriage() {
-      const suhuRaw = inputSuhu ? inputSuhu.value : "36.5";
+      const sisRaw = inputSistolik ? inputSistolik.value : "120";
+      const diaRaw = inputDiastolik ? inputDiastolik.value : "80";
       const nadiRaw = inputNadi ? inputNadi.value : "75";
-      const napasRaw = inputNapas ? inputNapas.value : "16";
 
-      const resSuhu = cekSuhu(suhuRaw);
+      const resSis = cekSistolik(sisRaw);
+      const resDia = cekDiastolik(diaRaw);
       const resNadi = cekNadi(nadiRaw);
-      const resNapas = cekPernapasan(napasRaw);
-      const resSummary = hasilSkrining(suhuRaw, nadiRaw, napasRaw);
+      const resSummary = hasilSkrining(sisRaw, diaRaw);
 
-      if (badgeSuhu) {
-        badgeSuhu.textContent = resSuhu.label;
-        badgeSuhu.className = `status-pill ${resSuhu.cls}`;
+      if (badgeSistolik) {
+        badgeSistolik.textContent = resSis.label;
+        badgeSistolik.className = `status-pill ${resSis.cls}`;
+      }
+      if (badgeDiastolik) {
+        badgeDiastolik.textContent = resDia.label;
+        badgeDiastolik.className = `status-pill ${resDia.cls}`;
       }
       if (badgeNadi) {
         badgeNadi.textContent = resNadi.label;
         badgeNadi.className = `status-pill ${resNadi.cls}`;
-      }
-      if (badgeNapas) {
-        badgeNapas.textContent = resNapas.label;
-        badgeNapas.className = `status-pill ${resNapas.cls}`;
       }
       if (badgeSummary) {
         badgeSummary.textContent = resSummary.label;
@@ -182,25 +223,15 @@ if (typeof document !== "undefined") {
       }
     }
 
-    // Bind reactive listeners to vital sign inputs
-    [inputSuhu, inputNadi, inputNapas].forEach((inputEl) => {
-      if (inputEl) {
-        inputEl.addEventListener("input", updateLiveTriage);
-        inputEl.addEventListener("change", updateLiveTriage);
-        inputEl.addEventListener("keyup", updateLiveTriage);
+    [inputSistolik, inputDiastolik, inputNadi].forEach((el) => {
+      if (el) {
+        el.addEventListener("input", updateLiveTriage);
+        el.addEventListener("change", updateLiveTriage);
+        el.addEventListener("keyup", updateLiveTriage);
       }
     });
 
-    const LEGACY_DUMMY_NAMES = new Set([
-      "Ahmad Fauzi",
-      "Siti Nurhaliza",
-      "Budi Santoso",
-      "Dewi Lestari",
-      "Budi Wicaksono",
-      "Rian Pratama"
-    ]);
-
-    // LocalStorage Helpers for Standalone / GitHub Pages Mode
+    // LocalStorage Helpers
     function getLocalPatients() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -209,15 +240,7 @@ if (typeof document !== "undefined") {
           return [];
         }
         const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) return [];
-        // Purge lingering legacy ghost records from browser localStorage
-        const cleaned = parsed.filter(
-          (p) => p && !LEGACY_DUMMY_NAMES.has(String(p.nama || "").trim())
-        );
-        if (cleaned.length !== parsed.length) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
-        }
-        return cleaned;
+        return Array.isArray(parsed) ? parsed : [];
       } catch (e) {
         return [];
       }
@@ -231,18 +254,20 @@ if (typeof document !== "undefined") {
       }
     }
 
-    // Update Statistics UI
+    // Render Statistics UI
     function renderStats(stats) {
       if (statsTotal) statsTotal.textContent = stats.total || 0;
       if (statsNormal) statsNormal.textContent = stats.normal || 0;
-      if (statsPemantauan) statsPemantauan.textContent = stats.pemantauan || 0;
-      if (statsPemeriksaan) statsPemeriksaan.textContent = stats.pemeriksaan || 0;
+      if (statsHipotensi) statsHipotensi.textContent = stats.hipotensi || 0;
+      if (statsPrahipertensi) statsPrahipertensi.textContent = stats.prahipertensi || 0;
+      if (statsHipertensi1) statsHipertensi1.textContent = stats.hipertensi_1 || 0;
+      if (statsHipertensi2) statsHipertensi2.textContent = stats.hipertensi_2 || 0;
+      if (statsKrisis) statsKrisis.textContent = stats.krisis || 0;
     }
 
     async function loadStats() {
       if (isOfflineMode) {
-        const patients = getLocalPatients();
-        renderStats(computeLocalStats(patients));
+        renderStats(computeLocalStats(getLocalPatients()));
         return;
       }
 
@@ -253,12 +278,11 @@ if (typeof document !== "undefined") {
         renderStats(stats);
       } catch (err) {
         isOfflineMode = true;
-        const patients = getLocalPatients();
-        renderStats(computeLocalStats(patients));
+        renderStats(computeLocalStats(getLocalPatients()));
       }
     }
 
-    // Render Table
+    // Render Datatable
     function renderTable(patients) {
       if (!tableBody) return;
       tableBody.innerHTML = "";
@@ -274,22 +298,23 @@ if (typeof document !== "undefined") {
         const tr = document.createElement("tr");
 
         let badgeCls = "status-normal";
-        if (p.hasil === "Perlu pemantauan lebih lanjut") {
-          badgeCls = "status-warning";
-        } else if (p.hasil === "Disarankan pemeriksaan oleh tenaga kesehatan") {
-          badgeCls = "status-danger";
-        }
+        const h = p.hasil || "";
+        if (h.includes("Krisis")) badgeCls = "status-critical";
+        else if (h.includes("Derajat 2")) badgeCls = "status-severe";
+        else if (h.includes("Derajat 1")) badgeCls = "status-alert";
+        else if (h.includes("Prahipertensi")) badgeCls = "status-caution";
+        else if (h.includes("Hipotensi")) badgeCls = "status-info";
 
-        const genderShort = p.jenis_kelamin && p.jenis_kelamin.includes("P") ? "P" : "L";
+        const genderShort = (p.jenis_kelamin || "").includes("L") ? "L" : "P";
 
         tr.innerHTML = `
-          <td class="th-num">${idx + 1}</td>
+          <td class="td-num">${idx + 1}</td>
           <td><strong>${escapeHtml(p.nama)}</strong></td>
           <td>${p.umur} th</td>
           <td>${genderShort}</td>
-          <td>${p.suhu} &deg;C</td>
+          <td>${p.sistolik} mmHg</td>
+          <td>${p.diastolik} mmHg</td>
           <td>${p.nadi} bpm</td>
-          <td>${p.napas} /m</td>
           <td>
             <span class="status-pill ${badgeCls}">
               ${escapeHtml(p.hasil)}
@@ -306,7 +331,6 @@ if (typeof document !== "undefined") {
         tableBody.appendChild(tr);
       });
 
-      // Attach row button events
       tableBody.querySelectorAll(".btn-detail").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = parseInt(btn.getAttribute("data-id"), 10);
@@ -324,7 +348,7 @@ if (typeof document !== "undefined") {
       });
     }
 
-    // Filter patients locally by search and status dropdown
+    // Filter Logic
     function applyFilters() {
       const query = (searchInput ? searchInput.value : "").trim().toLowerCase();
       const filter = (filterStatus ? filterStatus.value : "").trim();
@@ -342,7 +366,6 @@ if (typeof document !== "undefined") {
       renderTable(filtered);
     }
 
-    // Load Patients
     async function loadPatients() {
       if (isOfflineMode) {
         allPatients = getLocalPatients();
@@ -363,17 +386,17 @@ if (typeof document !== "undefined") {
       }
     }
 
-    // Form Submit Handler
+    // Form Submit
     if (patientForm) {
       patientForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const nama = inputNama ? inputNama.value.trim() : "";
-        const umur = inputUmur ? parseInt(inputUmur.value, 10) : 0;
+        const nama = (inputNama ? inputNama.value : "").trim();
+        const umur = parseInt(inputUmur ? inputUmur.value : "", 10);
         const jenis_kelamin = inputGender ? inputGender.value : "L";
-        const suhu = inputSuhu ? parseFloat(inputSuhu.value) : 36.5;
-        const nadi = inputNadi ? parseInt(inputNadi.value, 10) : 75;
-        const napas = inputNapas ? parseInt(inputNapas.value, 10) : 16;
+        const sistolik = parseInt(inputSistolik ? inputSistolik.value : "", 10);
+        const diastolik = parseInt(inputDiastolik ? inputDiastolik.value : "", 10);
+        const nadi = parseInt(inputNadi ? inputNadi.value : "", 10);
 
         if (!nama) {
           showToast("Nama pasien tidak boleh kosong");
@@ -387,38 +410,42 @@ if (typeof document !== "undefined") {
           return;
         }
 
-        if (isNaN(suhu) || isNaN(nadi) || isNaN(napas)) {
-          showToast("Mohon lengkapi seluruh tanda vital dengan benar.");
+        if (isNaN(sistolik) || isNaN(diastolik) || isNaN(nadi)) {
+          showToast("Mohon lengkapi tekanan darah dan denyut nadi dengan benar.");
           return;
         }
 
-        const payload = { nama, umur, jenis_kelamin, suhu, nadi, napas };
+        const patientPayload = {
+          nama,
+          umur,
+          jenis_kelamin,
+          sistolik,
+          diastolik,
+          nadi
+        };
 
         if (isOfflineMode) {
-          // LocalStorage mode
-          const localPatients = getLocalPatients();
-          const nextId = localPatients.reduce((max, p) => (p.id > max ? p.id : max), 0) + 1;
-          const resSuhu = cekSuhu(suhu);
+          const resSis = cekSistolik(sistolik);
+          const resDia = cekDiastolik(diastolik);
           const resNadi = cekNadi(nadi);
-          const resNapas = cekPernapasan(napas);
-          const resSummary = hasilSkrining(suhu, nadi, napas);
+          const resSummary = hasilSkrining(sistolik, diastolik);
 
-          const genderLabel = jenis_kelamin === "L" ? "Laki-laki (L)" : "Perempuan (P)";
-          const nowStr = new Date().toISOString().replace("T", " ").substring(0, 19);
+          let localPatients = getLocalPatients();
+          const newId = localPatients.length > 0 ? Math.max(...localPatients.map((p) => p.id || 0)) + 1 : 1;
 
           const newPatient = {
-            id: nextId,
+            id: newId,
             nama,
             umur,
-            jenis_kelamin: genderLabel,
-            suhu: Math.round(suhu * 10) / 10,
-            status_suhu: resSuhu.label,
+            jenis_kelamin: jenis_kelamin === "L" ? "Laki-laki (L)" : "Perempuan (P)",
+            sistolik,
+            status_sistolik: resSis.label,
+            diastolik,
+            status_diastolik: resDia.label,
             nadi,
             status_nadi: resNadi.label,
-            napas,
-            status_napas: resNapas.label,
             hasil: resSummary.label,
-            created_at: nowStr
+            created_at: new Date().toISOString().replace("T", " ").slice(0, 19)
           };
 
           localPatients.unshift(newPatient);
@@ -431,12 +458,11 @@ if (typeof document !== "undefined") {
           return;
         }
 
-        // Server API mode
         try {
           const res = await fetch("/api/patients", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(patientPayload)
           });
 
           if (!res.ok) {
@@ -450,31 +476,28 @@ if (typeof document !== "undefined") {
           await loadPatients();
           await loadStats();
         } catch (err) {
-          // Connection failure: switch to local persistence transparently
           isOfflineMode = true;
-          const localPatients = getLocalPatients();
-          const nextId = localPatients.reduce((max, p) => (p.id > max ? p.id : max), 0) + 1;
-          const resSuhu = cekSuhu(suhu);
+          const resSis = cekSistolik(sistolik);
+          const resDia = cekDiastolik(diastolik);
           const resNadi = cekNadi(nadi);
-          const resNapas = cekPernapasan(napas);
-          const resSummary = hasilSkrining(suhu, nadi, napas);
+          const resSummary = hasilSkrining(sistolik, diastolik);
 
-          const genderLabel = jenis_kelamin === "L" ? "Laki-laki (L)" : "Perempuan (P)";
-          const nowStr = new Date().toISOString().replace("T", " ").substring(0, 19);
+          let localPatients = getLocalPatients();
+          const newId = localPatients.length > 0 ? Math.max(...localPatients.map((p) => p.id || 0)) + 1 : 1;
 
           const newPatient = {
-            id: nextId,
+            id: newId,
             nama,
             umur,
-            jenis_kelamin: genderLabel,
-            suhu: Math.round(suhu * 10) / 10,
-            status_suhu: resSuhu.label,
+            jenis_kelamin: jenis_kelamin === "L" ? "Laki-laki (L)" : "Perempuan (P)",
+            sistolik,
+            status_sistolik: resSis.label,
+            diastolik,
+            status_diastolik: resDia.label,
             nadi,
             status_nadi: resNadi.label,
-            napas,
-            status_napas: resNapas.label,
             hasil: resSummary.label,
-            created_at: nowStr
+            created_at: new Date().toISOString().replace("T", " ").slice(0, 19)
           };
 
           localPatients.unshift(newPatient);
@@ -488,7 +511,7 @@ if (typeof document !== "undefined") {
       });
     }
 
-    // Custom In-App Confirmation Modal for Deletion
+    // In-App Confirm Modal for Deletion
     function openConfirmModal(id, nama) {
       pendingDeleteId = id;
       if (confirmModalText) {
@@ -521,7 +544,6 @@ if (typeof document !== "undefined") {
       });
     }
 
-    // Execute Delete Patient
     async function executeDeletePatient(id) {
       if (isOfflineMode) {
         let localPatients = getLocalPatients();
@@ -553,9 +575,9 @@ if (typeof document !== "undefined") {
       if (inputNama) inputNama.value = "";
       if (inputUmur) inputUmur.value = "";
       if (inputGender) inputGender.value = "L";
-      if (inputSuhu) inputSuhu.value = "36.5";
+      if (inputSistolik) inputSistolik.value = "120";
+      if (inputDiastolik) inputDiastolik.value = "80";
       if (inputNadi) inputNadi.value = "75";
-      if (inputNapas) inputNapas.value = "16";
       updateLiveTriage();
     }
 
@@ -563,17 +585,16 @@ if (typeof document !== "undefined") {
       btnReset.addEventListener("click", resetForm);
     }
 
-    // Search Input with Debounce
+    // Search and Filter Listeners
     if (searchInput) {
       searchInput.addEventListener("input", () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           applyFilters();
-        }, 250);
+        }, 180);
       });
     }
 
-    // Filter Dropdown
     if (filterStatus) {
       filterStatus.addEventListener("change", () => {
         applyFilters();
@@ -594,14 +615,17 @@ if (typeof document !== "undefined") {
           <div class="slip-label">Jenis Kelamin:</div>
           <div class="slip-value">${escapeHtml(p.jenis_kelamin)}</div>
 
-          <div class="slip-label">Suhu Tubuh:</div>
-          <div class="slip-value">${p.suhu} &deg;C (${escapeHtml(p.status_suhu)})</div>
+          <div class="slip-label">Tekanan Darah:</div>
+          <div class="slip-value"><strong>${p.sistolik}/${p.diastolik} mmHg</strong></div>
+
+          <div class="slip-label">Status Sistolik:</div>
+          <div class="slip-value">${escapeHtml(p.status_sistolik || "-")}</div>
+
+          <div class="slip-label">Status Diastolik:</div>
+          <div class="slip-value">${escapeHtml(p.status_diastolik || "-")}</div>
 
           <div class="slip-label">Denyut Nadi:</div>
-          <div class="slip-value">${p.nadi} kali/menit (${escapeHtml(p.status_nadi)})</div>
-
-          <div class="slip-label">Pernapasan:</div>
-          <div class="slip-value">${p.napas} kali/menit (${escapeHtml(p.status_napas)})</div>
+          <div class="slip-value">${p.nadi} kali/menit (${escapeHtml(p.status_nadi || "-")})</div>
 
           <div class="slip-label">Hasil Skrining:</div>
           <div class="slip-value"><strong>${escapeHtml(p.hasil)}</strong></div>
@@ -631,7 +655,7 @@ if (typeof document !== "undefined") {
       });
     }
 
-    // Export CSV
+    // CSV Exporter
     if (btnExportCsv) {
       btnExportCsv.addEventListener("click", () => {
         const dataToExport = allPatients;
@@ -642,15 +666,15 @@ if (typeof document !== "undefined") {
 
         const headers = [
           "ID",
-          "Nama",
+          "Nama Pasien",
           "Umur",
           "Jenis Kelamin",
-          "Suhu (C)",
-          "Status Suhu",
+          "Sistolik (mmHg)",
+          "Status Sistolik",
+          "Diastolik (mmHg)",
+          "Status Diastolik",
           "Nadi (bpm)",
           "Status Nadi",
-          "Napas (/m)",
-          "Status Napas",
           "Hasil Skrining",
           "Waktu"
         ];
@@ -660,12 +684,12 @@ if (typeof document !== "undefined") {
           `"${(p.nama || "").replace(/"/g, '""')}"`,
           p.umur,
           `"${p.jenis_kelamin || ""}"`,
-          p.suhu,
-          `"${p.status_suhu || ""}"`,
+          p.sistolik,
+          `"${p.status_sistolik || ""}"`,
+          p.diastolik,
+          `"${p.status_diastolik || ""}"`,
           p.nadi,
           `"${p.status_nadi || ""}"`,
-          p.napas,
-          `"${p.status_napas || ""}"`,
           `"${(p.hasil || "").replace(/"/g, '""')}"`,
           `"${p.created_at || ""}"`
         ]);
@@ -677,7 +701,7 @@ if (typeof document !== "undefined") {
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `data_skrining_pasien_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute("download", `data_tekanan_darah_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

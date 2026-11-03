@@ -1,32 +1,40 @@
-# Patient Health Screening Web Application
+# Patient Blood Pressure Screening Web Application
 
-A web-based clinical triage and vital signs screening system ported from the vocational healthcare curriculum script (*Koding dan Kecerdasan Artifisial, Kelas XI Fase F Awal SMK Kesehatan*).
+A web-based clinical triage and blood pressure screening system ported from `skrining_tekanan_darah.py`.
 
-## Clinical Triage Decision Matrix
+## Clinical Blood Pressure Decision Matrix
 
-The screening algorithm classifies three key vital sign parameters and computes an aggregated risk score.
+The screening algorithm classifies systolic pressure, diastolic pressure, and resting pulse rate to compute the final clinical diagnosis category.
 
-### 1. Vital Sign Parameters
+### 1. Blood Pressure Parameters
 
-| Parameter | Range | Classification | Clinical Indication |
-|---|---|---|---|
-| **Body Temperature** | < 37.5 °C | Normal | Afebrile baseline |
-| | 37.5 °C - 37.9 °C | Perlu Pemantauan | Low-grade elevation |
-| | >= 38.0 °C | Demam | Febrile state (Triggers +1 warning) |
-| **Pulse Rate** | < 60 bpm | Nadi Rendah | Bradycardia (Triggers +1 warning) |
-| | 60 - 100 bpm | Nadi Normal | Normal resting pulse |
-| | > 100 bpm | Nadi Tinggi | Tachycardia (Triggers +1 warning) |
-| **Respiratory Rate** | < 12 breaths/min | Pernapasan Lambat | Bradypnea (Triggers +1 warning) |
-| | 12 - 20 breaths/min | Pernapasan Normal | Normal respiratory baseline |
-| | > 20 breaths/min | Pernapasan Cepat | Tachypnea (Triggers +1 warning) |
-
-### 2. Overall Triage Outcome
-
-| Warning Points | Final Triage Category | Recommendation |
+| Parameter | Range | Classification |
 |---|---|---|
-| **0 points** | Kondisi dalam batas pemantauan normal | Routine observation |
-| **1 point** | Perlu pemantauan lebih lanjut | Focused monitoring within clinic |
-| **>= 2 points** | Disarankan pemeriksaan oleh tenaga kesehatan | Clinical escalation / medical doctor examination |
+| **Systolic Pressure (mmHg)** | < 90 | Sistolik Rendah (Hipotensi) |
+| | 90 - 119 | Sistolik Normal |
+| | 120 - 129 | Sistolik Meningkat (Prahipertensi) |
+| | 130 - 139 | Sistolik Tinggi (Hipertensi Derajat 1) |
+| | 140 - 179 | Sistolik Tinggi (Hipertensi Derajat 2) |
+| | >= 180 | Sistolik Krisis (Sangat Tinggi) |
+| **Diastolic Pressure (mmHg)** | < 60 | Diastolik Rendah (Hipotensi) |
+| | 60 - 79 | Diastolik Normal |
+| | 80 - 89 | Diastolik Tinggi (Hipertensi Derajat 1) |
+| | 90 - 119 | Diastolik Tinggi (Hipertensi Derajat 2) |
+| | >= 120 | Diastolik Krisis (Sangat Tinggi) |
+| **Pulse Rate (bpm)** | < 60 | Nadi Rendah |
+| | 60 - 100 | Nadi Normal |
+| | > 100 | Nadi Tinggi |
+
+### 2. Overall Clinical Screening Outcome
+
+| Criteria | Final Outcome |
+|---|---|
+| Sistolik >= 180 OR Diastolik >= 120 | **Krisis Hipertensi (Bahaya - Perlu Tindakan Darurat)** |
+| Sistolik >= 140 OR Diastolik >= 90 | **Hipertensi Derajat 2** |
+| Sistolik >= 130 OR Diastolik >= 80 | **Hipertensi Derajat 1** |
+| Sistolik >= 120 AND Diastolik < 80 | **Prahipertensi (Meningkat)** |
+| Sistolik < 90 OR Diastolik < 60 | **Hipotensi (Tekanan Darah Rendah)** |
+| In all other standard ranges | **Tekanan Darah Normal** |
 
 ---
 
@@ -34,22 +42,22 @@ The screening algorithm classifies three key vital sign parameters and computes 
 
 The application is structured into decoupled, single-responsibility modules:
 
-- `screening.py`: Pure, zero-dependency Python module implementing triage evaluation (`cek_suhu`, `cek_nadi`, `cek_pernapasan`, `hasil_skrining`, `evaluasi_pasien`).
+- `screening.py`: Pure, zero-dependency Python module implementing triage evaluation (`cek_sistolik`, `cek_diastolik`, `cek_nadi`, `hasil_skrining`, `evaluasi_pasien`).
 - `storage.py`: Thread-safe SQLite repository supporting in-memory testing and file persistence (`patients.db`) with case-insensitive search and aggregate statistical queries.
 - `app.py`: Standard library HTTP server with REST endpoints and static file serving.
 - `templates/index.html`: Responsive dashboard UI following the Pure Crisp Monochrome Light design system.
-- `static/css/style.css`: Clean, neutral grayscale styling with high contrast readability.
-- `static/js/app.js`: Real-time vital sign badges, debounced search, CSV export, and detail modal.
+- `static/css/style.css`: Clean, neutral styling with high contrast readability and clinical stage badges.
+- `static/js/app.js`: Real-time blood pressure badges, debounced search, custom in-app confirm modal, CSV export, and detail modal.
 
 ---
 
 ## API Endpoints
 
-- `GET /api/patients`: Retrieve all registered patient screening records.
-- `POST /api/patients`: Create a new record with automatic vital sign triage computation.
+- `GET /api/patients`: Retrieve all registered patient blood pressure screening records.
+- `POST /api/patients`: Create a new record with automatic blood pressure classification computation.
 - `GET /api/search?q=:name`: Case-insensitive substring search matching patient name.
-- `GET /api/stats`: Retrieve aggregate counts for total, normal, monitoring, and medical check.
-- `POST /api/triage/preview`: Calculate vital categories in real time without persisting.
+- `GET /api/stats`: Retrieve aggregate counts for total, normal, hipotensi, prahipertensi, hipertensi 1, hipertensi 2, and krisis.
+- `POST /api/triage/preview`: Calculate blood pressure categories in real time without persisting.
 - `DELETE /api/patients/:id`: Delete a patient record by ID.
 
 ---
@@ -58,7 +66,7 @@ The application is structured into decoupled, single-responsibility modules:
 
 ### 1. Run Tests
 ```bash
-./test.sh
+python3 -m unittest discover -p "test_*.py"
 ```
 
 ### 2. Start Application Locally

@@ -292,6 +292,36 @@ body {
   color: var(--success-text);
 }
 
+.status-pill.status-info {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.status-pill.status-caution {
+  background-color: #fefce8;
+  border-color: #fef08a;
+  color: #a16207;
+}
+
+.status-pill.status-alert {
+  background-color: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+
+.status-pill.status-severe {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.status-pill.status-critical {
+  background-color: #450a0a;
+  border-color: #7f1d1d;
+  color: #ffffff;
+}
+
 .status-pill.status-warning {
   background-color: var(--warning-bg);
   border-color: var(--warning-border);

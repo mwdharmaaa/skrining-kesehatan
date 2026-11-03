@@ -130,7 +130,7 @@ class TestAppServer(unittest.TestCase):
             self.assertEqual(resp.status, 200)
             self.assertIn("text/html", resp.headers.get("Content-Type", ""))
             html_content = resp.read().decode("utf-8")
-            self.assertIn("Sistem Skrining Kesehatan Pasien", html_content)
+            self.assertIn("Sistem Skrining Tekanan Darah Pasien", html_content)
 
         # Test CSS serving
         req_css = urllib.request.Request(f"{self.base_url}/static/css/style.css")
