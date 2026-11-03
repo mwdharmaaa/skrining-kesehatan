@@ -6,20 +6,22 @@ from screening import evaluasi_pasien
 
 
 class TestPatientRepository(unittest.TestCase):
-    """Test suite for patient records persistence and querying."""
+    """Test suite for patient blood pressure records persistence and querying."""
 
     def setUp(self):
         # Use an in-memory database for isolated, lightning-fast testing
         self.repo = PatientRepository(db_path=":memory:")
 
     def test_add_and_get_all_patients(self):
-        p1 = evaluasi_pasien("Budi Santoso", 25, "L", 36.6, 72, 16)
+        p1 = evaluasi_pasien("Budi Santoso", 25, "L", 115, 75, 72)
         created = self.repo.add_patient(p1)
         self.assertIsNotNone(created["id"])
         self.assertEqual(created["nama"], "Budi Santoso")
-        self.assertEqual(created["status_suhu"], "Normal")
+        self.assertEqual(created["status_sistolik"], "Sistolik Normal")
+        self.assertEqual(created["sistolik"], 115)
+        self.assertEqual(created["diastolik"], 75)
 
-        p2 = evaluasi_pasien("Siti Rahma", 30, "P", 38.5, 110, 18)
+        p2 = evaluasi_pasien("Siti Rahma", 30, "P", 145, 95, 80)
         self.repo.add_patient(p2)
 
         patients = self.repo.get_all_patients()
@@ -29,9 +31,9 @@ class TestPatientRepository(unittest.TestCase):
         self.assertEqual(patients[1]["nama"], "Budi Santoso")
 
     def test_search_patients(self):
-        p1 = evaluasi_pasien("Ahmad Dahlan", 45, "L", 36.8, 70, 16)
-        p2 = evaluasi_pasien("Ahmad Yani", 52, "L", 37.8, 85, 19)
-        p3 = evaluasi_pasien("Dewi Sartika", 28, "P", 38.2, 95, 18)
+        p1 = evaluasi_pasien("Ahmad Dahlan", 45, "L", 118, 78, 70)
+        p2 = evaluasi_pasien("Ahmad Yani", 52, "L", 125, 75, 74)
+        p3 = evaluasi_pasien("Dewi Sartika", 28, "P", 135, 85, 82)
         self.repo.add_patient(p1)
         self.repo.add_patient(p2)
         self.repo.add_patient(p3)
@@ -57,29 +59,36 @@ class TestPatientRepository(unittest.TestCase):
         stats = self.repo.get_statistics()
         self.assertEqual(stats["total"], 0)
         self.assertEqual(stats["normal"], 0)
-        self.assertEqual(stats["pemantauan"], 0)
-        self.assertEqual(stats["pemeriksaan"], 0)
+        self.assertEqual(stats["hipotensi"], 0)
+        self.assertEqual(stats["prahipertensi"], 0)
+        self.assertEqual(stats["hipertensi_1"], 0)
+        self.assertEqual(stats["hipertensi_2"], 0)
+        self.assertEqual(stats["krisis"], 0)
 
-        # 1 Normal
-        p1 = evaluasi_pasien("Pasien Normal", 20, "L", 36.5, 75, 16)
-        self.repo.add_patient(p1)
-
-        # 1 Pemantauan (suhu 38.2 -> 1 warning point)
-        p2 = evaluasi_pasien("Pasien Monitor", 22, "P", 38.2, 75, 16)
-        self.repo.add_patient(p2)
-
-        # 1 Pemeriksaan (suhu 38.5, nadi 110 -> 2 warning points)
-        p3 = evaluasi_pasien("Pasien Dokter", 40, "L", 38.5, 110, 16)
-        self.repo.add_patient(p3)
+        # 1 Normal (115/75)
+        self.repo.add_patient(evaluasi_pasien("Pasien Normal", 20, "L", 115, 75, 70))
+        # 1 Hipotensi (85/55)
+        self.repo.add_patient(evaluasi_pasien("Pasien Hipotensi", 22, "P", 85, 55, 65))
+        # 1 Prahipertensi (125/75)
+        self.repo.add_patient(evaluasi_pasien("Pasien Pra", 30, "L", 125, 75, 72))
+        # 1 Hipertensi 1 (135/85)
+        self.repo.add_patient(evaluasi_pasien("Pasien Hip1", 40, "P", 135, 85, 78))
+        # 1 Hipertensi 2 (150/95)
+        self.repo.add_patient(evaluasi_pasien("Pasien Hip2", 50, "L", 150, 95, 84))
+        # 1 Krisis (190/125)
+        self.repo.add_patient(evaluasi_pasien("Pasien Krisis", 60, "P", 190, 125, 96))
 
         stats = self.repo.get_statistics()
-        self.assertEqual(stats["total"], 3)
+        self.assertEqual(stats["total"], 6)
         self.assertEqual(stats["normal"], 1)
-        self.assertEqual(stats["pemantauan"], 1)
-        self.assertEqual(stats["pemeriksaan"], 1)
+        self.assertEqual(stats["hipotensi"], 1)
+        self.assertEqual(stats["prahipertensi"], 1)
+        self.assertEqual(stats["hipertensi_1"], 1)
+        self.assertEqual(stats["hipertensi_2"], 1)
+        self.assertEqual(stats["krisis"], 1)
 
     def test_delete_patient(self):
-        p = evaluasi_pasien("Pasien Hapus", 35, "L", 36.6, 70, 16)
+        p = evaluasi_pasien("Pasien Hapus", 35, "L", 118, 76, 70)
         created = self.repo.add_patient(p)
         patient_id = created["id"]
 

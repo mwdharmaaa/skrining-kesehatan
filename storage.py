@@ -1,5 +1,5 @@
 """Patient records storage and query repository using SQLite.
-Implements data persistence and statistical aggregations for health screening.
+Implements data persistence and statistical aggregations for blood pressure screening.
 """
 
 import sqlite3
@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional
 
 
 class PatientRepository:
-    """Thread-safe SQLite repository for patient screening records."""
+    """Thread-safe SQLite repository for patient blood pressure screening records."""
 
     def __init__(self, db_path: str = "patients.db"):
         self.db_path = db_path
@@ -32,12 +32,12 @@ class PatientRepository:
                     nama TEXT NOT NULL,
                     umur INTEGER NOT NULL,
                     jenis_kelamin TEXT NOT NULL,
-                    suhu REAL NOT NULL,
-                    status_suhu TEXT NOT NULL,
+                    sistolik INTEGER NOT NULL,
+                    status_sistolik TEXT NOT NULL,
+                    diastolik INTEGER NOT NULL,
+                    status_diastolik TEXT NOT NULL,
                     nadi INTEGER NOT NULL,
                     status_nadi TEXT NOT NULL,
-                    napas INTEGER NOT NULL,
-                    status_napas TEXT NOT NULL,
                     hasil TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -50,21 +50,21 @@ class PatientRepository:
             cursor.execute("""
                 INSERT INTO patients (
                     nama, umur, jenis_kelamin,
-                    suhu, status_suhu,
+                    sistolik, status_sistolik,
+                    diastolik, status_diastolik,
                     nadi, status_nadi,
-                    napas, status_napas,
                     hasil
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 patient_data["nama"],
                 patient_data["umur"],
                 patient_data["jenis_kelamin"],
-                patient_data["suhu"],
-                patient_data["status_suhu"],
+                patient_data["sistolik"],
+                patient_data["status_sistolik"],
+                patient_data["diastolik"],
+                patient_data["status_diastolik"],
                 patient_data["nadi"],
                 patient_data["status_nadi"],
-                patient_data["napas"],
-                patient_data["status_napas"],
                 patient_data["hasil"]
             ))
             patient_id = cursor.lastrowid
@@ -97,26 +97,32 @@ class PatientRepository:
             cursor.execute("SELECT COUNT(*) FROM patients")
             total = cursor.fetchone()[0]
 
-            cursor.execute(
-                "SELECT COUNT(*) FROM patients WHERE hasil = 'Kondisi dalam batas pemantauan normal'"
-            )
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil = 'Tekanan Darah Normal'")
             normal = cursor.fetchone()[0]
 
-            cursor.execute(
-                "SELECT COUNT(*) FROM patients WHERE hasil = 'Perlu pemantauan lebih lanjut'"
-            )
-            pemantauan = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil = 'Hipotensi (Tekanan Darah Rendah)'")
+            hipotensi = cursor.fetchone()[0]
 
-            cursor.execute(
-                "SELECT COUNT(*) FROM patients WHERE hasil = 'Disarankan pemeriksaan oleh tenaga kesehatan'"
-            )
-            pemeriksaan = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil = 'Prahipertensi (Meningkat)'")
+            prahipertensi = cursor.fetchone()[0]
+
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil = 'Hipertensi Derajat 1'")
+            hipertensi_1 = cursor.fetchone()[0]
+
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil = 'Hipertensi Derajat 2'")
+            hipertensi_2 = cursor.fetchone()[0]
+
+            cursor.execute("SELECT COUNT(*) FROM patients WHERE hasil LIKE '%Krisis%'")
+            krisis = cursor.fetchone()[0]
 
             return {
                 "total": total,
                 "normal": normal,
-                "pemantauan": pemantauan,
-                "pemeriksaan": pemeriksaan
+                "hipotensi": hipotensi,
+                "prahipertensi": prahipertensi,
+                "hipertensi_1": hipertensi_1,
+                "hipertensi_2": hipertensi_2,
+                "krisis": krisis
             }
 
     def delete_patient(self, patient_id: int) -> bool:
