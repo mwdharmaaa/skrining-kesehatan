@@ -57,36 +57,39 @@ class TestAppServer(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("total", stats)
         self.assertIn("normal", stats)
-        self.assertIn("pemantauan", stats)
-        self.assertIn("pemeriksaan", stats)
+        self.assertIn("hipotensi", stats)
+        self.assertIn("prahipertensi", stats)
+        self.assertIn("hipertensi_1", stats)
+        self.assertIn("hipertensi_2", stats)
+        self.assertIn("krisis", stats)
 
     def test_create_patient(self):
         new_patient = {
             "nama": "Test Pasien Baru",
-            "umur": 19,
+            "umur": 45,
             "jenis_kelamin": "L",
-            "suhu": 38.8,
-            "nadi": 112,
-            "napas": 24
+            "sistolik": 145,
+            "diastolik": 95,
+            "nadi": 82
         }
         status, body = self._post_json("/api/patients", new_patient)
         self.assertEqual(status, 201)
         self.assertEqual(body["message"], "DATA PASIEN BERHASIL DISIMPAN")
         data = body["data"]
         self.assertEqual(data["nama"], "Test Pasien Baru")
-        self.assertEqual(data["status_suhu"], "Demam")
-        self.assertEqual(data["status_nadi"], "Nadi Tinggi")
-        self.assertEqual(data["status_napas"], "Pernapasan Cepat")
-        self.assertEqual(data["hasil"], "Disarankan pemeriksaan oleh tenaga kesehatan")
+        self.assertEqual(data["status_sistolik"], "Sistolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(data["status_diastolik"], "Diastolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(data["status_nadi"], "Nadi Normal")
+        self.assertEqual(data["hasil"], "Hipertensi Derajat 2")
 
     def test_search_patients(self):
         self._post_json("/api/patients", {
             "nama": "Siti Nurhaliza",
-            "umur": 16,
+            "umur": 30,
             "jenis_kelamin": "P",
-            "suhu": 37.0,
-            "nadi": 78,
-            "napas": 16
+            "sistolik": 115,
+            "diastolik": 75,
+            "nadi": 72
         })
         status, body = self._get_json("/api/search?q=Nurhaliza")
         self.assertEqual(status, 200)
@@ -95,13 +98,13 @@ class TestAppServer(unittest.TestCase):
         self.assertIn("Siti Nurhaliza", names)
 
     def test_preview_triage(self):
-        payload = {"suhu": 37.6, "nadi": 78, "napas": 16}
+        payload = {"sistolik": 125, "diastolik": 75, "nadi": 78}
         status, body = self._post_json("/api/triage/preview", payload)
         self.assertEqual(status, 200)
-        self.assertEqual(body["status_suhu"], "Perlu Pemantauan")
+        self.assertEqual(body["status_sistolik"], "Sistolik Meningkat (Prahipertensi)")
+        self.assertEqual(body["status_diastolik"], "Diastolik Normal")
         self.assertEqual(body["status_nadi"], "Nadi Normal")
-        self.assertEqual(body["status_napas"], "Pernapasan Normal")
-        self.assertEqual(body["hasil"], "Kondisi dalam batas pemantauan normal")
+        self.assertEqual(body["hasil"], "Prahipertensi (Meningkat)")
 
     def test_delete_patient(self):
         # Create a patient to delete
@@ -109,9 +112,9 @@ class TestAppServer(unittest.TestCase):
             "nama": "Pasien Yang Dihapus",
             "umur": 21,
             "jenis_kelamin": "P",
-            "suhu": 36.5,
-            "nadi": 70,
-            "napas": 16
+            "sistolik": 110,
+            "diastolik": 70,
+            "nadi": 75
         })
         pid = created["data"]["id"]
 

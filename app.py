@@ -9,7 +9,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler, ThreadingHTTPServe
 from urllib.parse import urlparse, parse_qs
 from typing import Optional
 
-from screening import evaluasi_pasien, cek_suhu, cek_nadi, cek_pernapasan, hasil_skrining
+from screening import evaluasi_pasien, cek_sistolik, cek_diastolik, cek_nadi, hasil_skrining
 from storage import PatientRepository
 
 
@@ -108,21 +108,21 @@ class ScreeningRequestHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/triage/preview":
             try:
-                suhu = float(body.get("suhu", 36.5))
+                sistolik = int(body.get("sistolik", 120))
+                diastolik = int(body.get("diastolik", 80))
                 nadi = int(body.get("nadi", 75))
-                napas = int(body.get("napas", 16))
                 result = {
-                    "suhu": suhu,
-                    "status_suhu": cek_suhu(suhu),
+                    "sistolik": sistolik,
+                    "status_sistolik": cek_sistolik(sistolik),
+                    "diastolik": diastolik,
+                    "status_diastolik": cek_diastolik(diastolik),
                     "nadi": nadi,
                     "status_nadi": cek_nadi(nadi),
-                    "napas": napas,
-                    "status_napas": cek_pernapasan(napas),
-                    "hasil": hasil_skrining(suhu, nadi, napas)
+                    "hasil": hasil_skrining(sistolik, diastolik)
                 }
                 self._send_json(200, result)
             except (ValueError, TypeError) as e:
-                self._send_error_json(400, f"Invalid vital sign parameters: {str(e)}")
+                self._send_error_json(400, f"Invalid blood pressure parameters: {str(e)}")
             return
 
         if path == "/api/patients":
@@ -130,11 +130,11 @@ class ScreeningRequestHandler(SimpleHTTPRequestHandler):
             nama = body.get("nama")
             umur = body.get("umur")
             jenis_kelamin = body.get("jenis_kelamin")
-            suhu = body.get("suhu")
+            sistolik = body.get("sistolik")
+            diastolik = body.get("diastolik")
             nadi = body.get("nadi")
-            napas = body.get("napas")
 
-            if not nama or umur is None or not jenis_kelamin or suhu is None or nadi is None or napas is None:
+            if not nama or umur is None or not jenis_kelamin or sistolik is None or diastolik is None or nadi is None:
                 self._send_error_json(400, "Missing required patient fields")
                 return
 
@@ -143,9 +143,9 @@ class ScreeningRequestHandler(SimpleHTTPRequestHandler):
                     nama=str(nama),
                     umur=int(umur),
                     jenis_kelamin=str(jenis_kelamin),
-                    suhu=float(suhu),
-                    nadi=int(nadi),
-                    napas=int(napas)
+                    sistolik=int(sistolik),
+                    diastolik=int(diastolik),
+                    nadi=int(nadi)
                 )
                 saved = self.repo.add_patient(evaluated)
                 self._send_json(201, {"message": "DATA PASIEN BERHASIL DISIMPAN", "data": saved})
