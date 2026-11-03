@@ -1,32 +1,65 @@
-"""Unit tests for screening rules engine.
-Tests boundary conditions and clinical classifications from the PDF.
+"""Unit tests for blood pressure screening rules engine.
+Tests boundary conditions and clinical classifications from skrining_tekanan_darah.py.
 """
 
 import unittest
 from screening import (
-    cek_suhu,
+    cek_sistolik,
+    cek_diastolik,
     cek_nadi,
-    cek_pernapasan,
     hasil_skrining,
     evaluasi_pasien
 )
 
 
-class TestScreeningEngine(unittest.TestCase):
-    """Test suite for vital signs triage rules."""
+class TestBloodPressureScreening(unittest.TestCase):
+    """Test suite for blood pressure classification rules."""
 
-    def test_cek_suhu_boundaries(self):
-        # Normal (< 37.5)
-        self.assertEqual(cek_suhu(36.5), "Normal")
-        self.assertEqual(cek_suhu(37.4), "Normal")
+    def test_cek_sistolik_boundaries(self):
+        # Hipotensi (< 90)
+        self.assertEqual(cek_sistolik(80), "Sistolik Rendah (Hipotensi)")
+        self.assertEqual(cek_sistolik(89), "Sistolik Rendah (Hipotensi)")
 
-        # Perlu Pemantauan (37.5 <= suhu < 38.0)
-        self.assertEqual(cek_suhu(37.5), "Perlu Pemantauan")
-        self.assertEqual(cek_suhu(37.9), "Perlu Pemantauan")
+        # Normal (90 <= sistolik < 120)
+        self.assertEqual(cek_sistolik(90), "Sistolik Normal")
+        self.assertEqual(cek_sistolik(119), "Sistolik Normal")
 
-        # Demam (>= 38.0)
-        self.assertEqual(cek_suhu(38.0), "Demam")
-        self.assertEqual(cek_suhu(39.2), "Demam")
+        # Prahipertensi (120 <= sistolik < 130)
+        self.assertEqual(cek_sistolik(120), "Sistolik Meningkat (Prahipertensi)")
+        self.assertEqual(cek_sistolik(129), "Sistolik Meningkat (Prahipertensi)")
+
+        # Hipertensi Derajat 1 (130 <= sistolik < 140)
+        self.assertEqual(cek_sistolik(130), "Sistolik Tinggi (Hipertensi Derajat 1)")
+        self.assertEqual(cek_sistolik(139), "Sistolik Tinggi (Hipertensi Derajat 1)")
+
+        # Hipertensi Derajat 2 (140 <= sistolik < 180)
+        self.assertEqual(cek_sistolik(140), "Sistolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(cek_sistolik(179), "Sistolik Tinggi (Hipertensi Derajat 2)")
+
+        # Krisis (>= 180)
+        self.assertEqual(cek_sistolik(180), "Sistolik Krisis (Sangat Tinggi)")
+        self.assertEqual(cek_sistolik(210), "Sistolik Krisis (Sangat Tinggi)")
+
+    def test_cek_diastolik_boundaries(self):
+        # Hipotensi (< 60)
+        self.assertEqual(cek_diastolik(55), "Diastolik Rendah (Hipotensi)")
+        self.assertEqual(cek_diastolik(59), "Diastolik Rendah (Hipotensi)")
+
+        # Normal (60 <= diastolik < 80)
+        self.assertEqual(cek_diastolik(60), "Diastolik Normal")
+        self.assertEqual(cek_diastolik(79), "Diastolik Normal")
+
+        # Hipertensi Derajat 1 (80 <= diastolik < 90)
+        self.assertEqual(cek_diastolik(80), "Diastolik Tinggi (Hipertensi Derajat 1)")
+        self.assertEqual(cek_diastolik(89), "Diastolik Tinggi (Hipertensi Derajat 1)")
+
+        # Hipertensi Derajat 2 (90 <= diastolik < 120)
+        self.assertEqual(cek_diastolik(90), "Diastolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(cek_diastolik(119), "Diastolik Tinggi (Hipertensi Derajat 2)")
+
+        # Krisis (>= 120)
+        self.assertEqual(cek_diastolik(120), "Diastolik Krisis (Sangat Tinggi)")
+        self.assertEqual(cek_diastolik(135), "Diastolik Krisis (Sangat Tinggi)")
 
     def test_cek_nadi_boundaries(self):
         # Nadi Rendah (< 60)
@@ -42,77 +75,75 @@ class TestScreeningEngine(unittest.TestCase):
         self.assertEqual(cek_nadi(101), "Nadi Tinggi")
         self.assertEqual(cek_nadi(125), "Nadi Tinggi")
 
-    def test_cek_pernapasan_boundaries(self):
-        # Pernapasan Lambat (< 12)
-        self.assertEqual(cek_pernapasan(10), "Pernapasan Lambat")
-        self.assertEqual(cek_pernapasan(11), "Pernapasan Lambat")
-
-        # Pernapasan Normal (12 <= napas <= 20)
-        self.assertEqual(cek_pernapasan(12), "Pernapasan Normal")
-        self.assertEqual(cek_pernapasan(16), "Pernapasan Normal")
-        self.assertEqual(cek_pernapasan(20), "Pernapasan Normal")
-
-        # Pernapasan Cepat (> 20)
-        self.assertEqual(cek_pernapasan(21), "Pernapasan Cepat")
-        self.assertEqual(cek_pernapasan(28), "Pernapasan Cepat")
-
     def test_hasil_skrining_outcomes(self):
-        # 0 warnings -> Normal
+        # Krisis Hipertensi (sistolik >= 180 or diastolik >= 120)
         self.assertEqual(
-            hasil_skrining(36.6, 75, 16),
-            "Kondisi dalam batas pemantauan normal"
-        )
-        # 37.5 does not trigger warning count in original script (suhu >= 38 is required)
-        self.assertEqual(
-            hasil_skrining(37.6, 75, 16),
-            "Kondisi dalam batas pemantauan normal"
-        )
-
-        # 1 warning -> Perlu pemantauan lebih lanjut
-        self.assertEqual(
-            hasil_skrining(38.2, 75, 16),
-            "Perlu pemantauan lebih lanjut"
+            hasil_skrining(185, 80),
+            "Krisis Hipertensi (Bahaya - Perlu Tindakan Darurat)"
         )
         self.assertEqual(
-            hasil_skrining(36.6, 115, 16),
-            "Perlu pemantauan lebih lanjut"
-        )
-        self.assertEqual(
-            hasil_skrining(36.6, 75, 24),
-            "Perlu pemantauan lebih lanjut"
+            hasil_skrining(130, 125),
+            "Krisis Hipertensi (Bahaya - Perlu Tindakan Darurat)"
         )
 
-        # 2 warnings -> Disarankan pemeriksaan oleh tenaga kesehatan
+        # Hipertensi Derajat 2 (sistolik >= 140 or diastolik >= 90)
         self.assertEqual(
-            hasil_skrining(38.5, 120, 18),
-            "Disarankan pemeriksaan oleh tenaga kesehatan"
+            hasil_skrining(145, 75),
+            "Hipertensi Derajat 2"
+        )
+        self.assertEqual(
+            hasil_skrining(125, 95),
+            "Hipertensi Derajat 2"
         )
 
-        # 3 warnings -> Disarankan pemeriksaan oleh tenaga kesehatan
+        # Hipertensi Derajat 1 (sistolik >= 130 or diastolik >= 80)
         self.assertEqual(
-            hasil_skrining(39.0, 130, 26),
-            "Disarankan pemeriksaan oleh tenaga kesehatan"
+            hasil_skrining(132, 75),
+            "Hipertensi Derajat 1"
+        )
+        self.assertEqual(
+            hasil_skrining(118, 85),
+            "Hipertensi Derajat 1"
+        )
+
+        # Prahipertensi (sistolik >= 120 and diastolik < 80)
+        self.assertEqual(
+            hasil_skrining(122, 70),
+            "Prahipertensi (Meningkat)"
+        )
+
+        # Hipotensi (sistolik < 90 or diastolik < 60)
+        self.assertEqual(
+            hasil_skrining(85, 70),
+            "Hipotensi (Tekanan Darah Rendah)"
+        )
+        self.assertEqual(
+            hasil_skrining(100, 55),
+            "Hipotensi (Tekanan Darah Rendah)"
+        )
+
+        # Tekanan Darah Normal
+        self.assertEqual(
+            hasil_skrining(115, 75),
+            "Tekanan Darah Normal"
         )
 
     def test_evaluasi_pasien(self):
         record = evaluasi_pasien(
-            nama="Ahmad Fauzi",
-            umur=17,
+            nama="Budi Santoso",
+            umur=45,
             jenis_kelamin="L",
-            suhu=38.4,
-            nadi=104,
-            napas=18
+            sistolik=142,
+            diastolik=92,
+            nadi=78
         )
-        self.assertEqual(record["nama"], "Ahmad Fauzi")
-        self.assertEqual(record["umur"], 17)
-        self.assertEqual(record["status_suhu"], "Demam")
-        self.assertEqual(record["status_nadi"], "Nadi Tinggi")
-        self.assertEqual(record["status_napas"], "Pernapasan Normal")
-        self.assertEqual(
-            record["hasil"],
-            "Disarankan pemeriksaan oleh tenaga kesehatan"
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertEqual(record["nama"], "Budi Santoso")
+        self.assertEqual(record["umur"], 45)
+        self.assertEqual(record["jenis_kelamin"], "Laki-laki (L)")
+        self.assertEqual(record["sistolik"], 142)
+        self.assertEqual(record["status_sistolik"], "Sistolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(record["diastolik"], 92)
+        self.assertEqual(record["status_diastolik"], "Diastolik Tinggi (Hipertensi Derajat 2)")
+        self.assertEqual(record["nadi"], 78)
+        self.assertEqual(record["status_nadi"], "Nadi Normal")
+        self.assertEqual(record["hasil"], "Hipertensi Derajat 2")

@@ -1,22 +1,42 @@
-"""Core patient health screening and triage rules engine.
-Ported from Aplikasi_Skrining_Kesehatan_Pasien.pdf (SMK Kesehatan).
+"""Core patient blood pressure screening and clinical classification rules engine.
+Ported from skrining_tekanan_darah.py.
 """
 
 from typing import Dict, Any
 
 
-def cek_suhu(suhu: float) -> str:
-    """Determine temperature category."""
-    if suhu >= 38.0:
-        return "Demam"
-    elif suhu >= 37.5:
-        return "Perlu Pemantauan"
+def cek_sistolik(sistolik: int) -> str:
+    """Determine systolic blood pressure category."""
+    if sistolik >= 180:
+        return "Sistolik Krisis (Sangat Tinggi)"
+    elif sistolik >= 140:
+        return "Sistolik Tinggi (Hipertensi Derajat 2)"
+    elif sistolik >= 130:
+        return "Sistolik Tinggi (Hipertensi Derajat 1)"
+    elif sistolik >= 120:
+        return "Sistolik Meningkat (Prahipertensi)"
+    elif sistolik >= 90:
+        return "Sistolik Normal"
     else:
-        return "Normal"
+        return "Sistolik Rendah (Hipotensi)"
+
+
+def cek_diastolik(diastolik: int) -> str:
+    """Determine diastolic blood pressure category."""
+    if diastolik >= 120:
+        return "Diastolik Krisis (Sangat Tinggi)"
+    elif diastolik >= 90:
+        return "Diastolik Tinggi (Hipertensi Derajat 2)"
+    elif diastolik >= 80:
+        return "Diastolik Tinggi (Hipertensi Derajat 1)"
+    elif diastolik >= 60:
+        return "Diastolik Normal"
+    else:
+        return "Diastolik Rendah (Hipotensi)"
 
 
 def cek_nadi(nadi: int) -> str:
-    """Determine pulse rate category."""
+    """Determine resting pulse rate category."""
     if nadi < 60:
         return "Nadi Rendah"
     elif nadi <= 100:
@@ -25,49 +45,36 @@ def cek_nadi(nadi: int) -> str:
         return "Nadi Tinggi"
 
 
-def cek_pernapasan(napas: int) -> str:
-    """Determine respiratory rate category."""
-    if napas < 12:
-        return "Pernapasan Lambat"
-    elif napas <= 20:
-        return "Pernapasan Normal"
+def hasil_skrining(sistolik: int, diastolik: int) -> str:
+    """Determine blood pressure clinical classification outcome."""
+    if sistolik >= 180 or diastolik >= 120:
+        return "Krisis Hipertensi (Bahaya - Perlu Tindakan Darurat)"
+    elif sistolik >= 140 or diastolik >= 90:
+        return "Hipertensi Derajat 2"
+    elif sistolik >= 130 or diastolik >= 80:
+        return "Hipertensi Derajat 1"
+    elif sistolik >= 120 and diastolik < 80:
+        return "Prahipertensi (Meningkat)"
+    elif sistolik < 90 or diastolik < 60:
+        return "Hipotensi (Tekanan Darah Rendah)"
     else:
-        return "Pernapasan Cepat"
-
-
-def hasil_skrining(suhu: float, nadi: int, napas: int) -> str:
-    """Determine overall clinical screening outcome."""
-    jumlah_peringatan = 0
-    if suhu >= 38.0:
-        jumlah_peringatan += 1
-    if nadi < 60 or nadi > 100:
-        jumlah_peringatan += 1
-    if napas < 12 or napas > 20:
-        jumlah_peringatan += 1
-
-    if jumlah_peringatan == 0:
-        return "Kondisi dalam batas pemantauan normal"
-    elif jumlah_peringatan == 1:
-        return "Perlu pemantauan lebih lanjut"
-    else:
-        return "Disarankan pemeriksaan oleh tenaga kesehatan"
+        return "Tekanan Darah Normal"
 
 
 def evaluasi_pasien(
     nama: str,
     umur: int,
     jenis_kelamin: str,
-    suhu: float,
-    nadi: int,
-    napas: int
+    sistolik: int,
+    diastolik: int,
+    nadi: int
 ) -> Dict[str, Any]:
-    """Evaluate patient vital signs and build complete patient record."""
-    status_suhu = cek_suhu(suhu)
+    """Evaluate patient blood pressure parameters and return structured record."""
+    status_sistolik = cek_sistolik(sistolik)
+    status_diastolik = cek_diastolik(diastolik)
     status_nadi = cek_nadi(nadi)
-    status_napas = cek_pernapasan(napas)
-    skrining = hasil_skrining(suhu, nadi, napas)
+    skrining = hasil_skrining(sistolik, diastolik)
 
-    # Standardize gender display
     jk_clean = jenis_kelamin.strip().upper()
     if jk_clean in ("L", "LAKI-LAKI", "MALE", "M"):
         gender_label = "Laki-laki (L)"
@@ -80,11 +87,11 @@ def evaluasi_pasien(
         "nama": nama.strip(),
         "umur": int(umur),
         "jenis_kelamin": gender_label,
-        "suhu": round(float(suhu), 1),
-        "status_suhu": status_suhu,
+        "sistolik": int(sistolik),
+        "status_sistolik": status_sistolik,
+        "diastolik": int(diastolik),
+        "status_diastolik": status_diastolik,
         "nadi": int(nadi),
         "status_nadi": status_nadi,
-        "napas": int(napas),
-        "status_napas": status_napas,
         "hasil": skrining
     }
